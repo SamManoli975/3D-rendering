@@ -18,11 +18,11 @@ document.body.appendChild(renderer.domElement);
 
 // Create a plane geometry and a basic material and combine them into a mesh
 const geometry = new THREE.PlaneGeometry(10, 10); // Make the plane larger to act as a floor
-const material = new THREE.MeshBasicMaterial({  side: THREE.DoubleSide });
+const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const plane = new THREE.Mesh(geometry, material);
 
-const BoxGeo = new THREE.BoxGeometry(1,1);
-const Boxmaterial = new THREE.MeshBasicMaterial({color: 0xffff00,  side: THREE.DoubleSide });
+const BoxGeo = new THREE.BoxGeometry(1, 1);
+const Boxmaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
 const cube = new THREE.Mesh(BoxGeo, Boxmaterial);
 cube.position.y = -0.5; // Set the cube's y position to half its height to rest it on the plane
 scene.add(cube);
@@ -42,25 +42,31 @@ controls.dampingFactor = 0.25; // Damping inertia
 controls.screenSpacePanning = false; // Do not allow panning up/down
 controls.maxPolarAngle = Math.PI / 2; // Limit vertical movement to the ground
 let moveDirection = { left: false, right: false, up: false, down: false };
+// let keyPressed = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
 document.addEventListener('keydown', (event) => {
-    switch (event.code) {
-        case 'ArrowUp':
-            moveDirection.up = true;
-            break;
-        case 'ArrowDown':
-            moveDirection.down = true;
-            break;
-        case 'ArrowLeft':
-            moveDirection.left = true;
-            break;
-        case 'ArrowRight':
-            moveDirection.right = true;
-            break;
-    }
+    // if(!keyPressed[event.code]) {
+    //     keyPressed[event.code] = true;
+        switch (event.code) {
+            case 'ArrowUp':
+                moveDirection.up = true;
+                break;
+            case 'ArrowDown':
+                moveDirection.down = true;
+                break;
+            case 'ArrowLeft':
+                moveDirection.left = true;
+                break;
+            case 'ArrowRight':
+                moveDirection.right = true;
+                break;
+        }
+    // }
 });
 
 document.addEventListener('keyup', (event) => {
+    // keyPressed[event.code] = false
+
     switch (event.code) {
         case 'ArrowUp':
             moveDirection.up = false;
@@ -79,10 +85,23 @@ document.addEventListener('keyup', (event) => {
 
 function moveCube() {
     const speed = 0.1;
-    if (moveDirection.up) cube.position.z -= speed;
-    if (moveDirection.down) cube.position.z += speed;
-    if (moveDirection.left) cube.position.x -= speed;
-    if (moveDirection.right) cube.position.x += speed;
+    if (moveDirection.up) {
+        cube.position.z -= speed
+        // cube.rotation.x -= 0.2
+        // moveDirection.up = false
+    };
+    if (moveDirection.down) {
+        cube.position.z += speed
+        // moveDirection.down = false
+    };
+    if (moveDirection.left) {
+        cube.position.x -= speed
+        // moveDirection.left = false
+    };
+    if (moveDirection.right) {
+        cube.position.x += speed
+        // moveDirection.right = false
+    };
 }
 
 // Create an animation loop

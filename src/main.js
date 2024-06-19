@@ -3,35 +3,51 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
-const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-const cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
-const controls = new DragControls( cube, camera, renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// add event listener to highlight dragged objects
 
-controls.addEventListener( 'dragstart', function ( event ) {
+const geometry = new THREE.OctahedronGeometry(1, 1, 1);
+const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0xffff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
-	event.object.material.emissive.set( 0xaaaaaa );
 
-} );
 
-controls.addEventListener( 'dragend', function ( event ) {
+const edges = new THREE.EdgesGeometry(geometry);
+const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+const edgesLineSegments = new THREE.LineSegments(edges, edgesMaterial);
+scene.add(edgesLineSegments);
 
-	event.object.material.emissive.set( 0x000000 );
 
-} );
+
+
+const controls = new DragControls([cube], camera, renderer.domElement);
+const controls2 = new DragControls([edgesLineSegments], camera, renderer.domElement);
+
+controls.addEventListener('dragstart', function (event) {
+    event.object.material.emissive.setHex(0xaaaaaa);
+});
+
+controls.addEventListener('dragend', function (event) {
+    event.object.material.emissive.setHex(0xfffff00);
+});
+
 
 camera.position.z = 5;
+
 function animate() {
-//     cube.rotation.x += 0.01;
-// cube.rotation.y += 0.01;
-	renderer.render( scene, camera );
+    requestAnimationFrame(animate);
+
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    edgesLineSegments.rotation.x += 0.01;
+    edgesLineSegments.rotation.y += 0.01;
+
+    renderer.render(scene, camera);
 }
-renderer.setAnimationLoop( animate );
+
+animate();

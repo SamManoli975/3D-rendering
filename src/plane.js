@@ -70,11 +70,18 @@ tiltGroup.add(cube);
 // Position the floor down along the y-axis
 floor.position.y = -1;
 
-// Raycaster setup
+
+
+// Variables to smooth out the tilt motion
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const planeNormal = new THREE.Vector3(0, 1, 0);
+
+// Variables to smooth out the tilt motion
+let targetTiltX = 0;
+let targetTiltZ = 0;
+const tiltSpeed = 0.1; // Adjust this value for smoothness
 
 // Event listener for mouse movement
 window.addEventListener('mousemove', (event) => {
@@ -91,15 +98,11 @@ window.addEventListener('mousemove', (event) => {
         const point = intersects[0].point;
 
         // Calculate the tilt angles based on the intersection point
-        const tiltAngleX = (point.z / floorSize) * Math.PI / 6; // Tilt angle based on z-position
-        const tiltAngleZ = (point.x / floorSize) * Math.PI / 6; // Tilt angle based on x-position
-
-        // Apply tilt to the group
-        tiltGroup.rotation.x = tiltAngleX;
-        tiltGroup.rotation.z = tiltAngleZ;
+        const maxTiltAngle = Math.PI / 6; // Maximum tilt angle (30 degrees)
+        targetTiltX = THREE.MathUtils.clamp((point.z / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle);
+        targetTiltZ = THREE.MathUtils.clamp((point.x / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle);
     }
 });
-
 
 
 
@@ -184,13 +187,38 @@ function moveCube() {
         cube.position.copy(newPosition);
     }
 }
+function moveBall() {
+    const speed = 0.1; // Adjust speed as needed
+    const maxTiltAngle = Math.PI / 6; // Maximum tilt angle (30 degrees)
+
+    // Calculate the movement direction based on tilt angles
+    const tiltX = tiltGroup.rotation.x;
+    const tiltZ = tiltGroup.rotation.z;
+
+    // Calculate movement direction from tilt angles
+    const moveDirection = new THREE.Vector3(
+        Math.sin(tiltZ) * Math.cos(tiltX),
+        -Math.sin(tiltX),
+        Math.cos(tiltZ) * Math.cos(tiltX)
+    );
+
+    // Scale the movement direction by speed
+    moveDirection.multiplyScalar(speed);
+
+    // Update ball position
+    cube.position.add(moveDirection);
+}
 
 // Create an animation loop
 function animate() {
     requestAnimationFrame(animate);
 
     moveCube(); // Move the cube based on key inputs
+    moveBall();
 
+    // Smoothly interpolate the tilt angles
+    tiltGroup.rotation.x += (targetTiltX - tiltGroup.rotation.x) * tiltSpeed;
+    tiltGroup.rotation.z += (targetTiltZ - tiltGroup.rotation.z) * tiltSpeed;
     // controls.update(); // Update the controls
 
     // Render the scene from the perspective of the camera

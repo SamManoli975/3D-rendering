@@ -11,29 +11,64 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 camera.position.set(0, 5, 5); // Move the camera back and up
 camera.lookAt(0, 0, 0); // Make the camera look at the center of the scene
 
+
+//wall 
+const maze = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 1, 1],
+    [1, 0, 1, 1, 0, 1, 0, 1, 1, 1],
+    [1, 0, 0, 1, 0, 1, 0, 1, 0, 1],
+    [1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0, 1, 1, 1, 1, 1]
+];
 // Create a renderer and add it to the DOM
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Create a plane geometry and a basic material and combine them into a mesh
-const geometry = new THREE.PlaneGeometry(10, 10); // Make the plane larger to act as a floor
-const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
-const plane = new THREE.Mesh(geometry, material);
+const floorSize = 50;
+const cellSize = floorSize / maze.length; // Adjust cell size to fit the floor
+const floorGeometry = new THREE.PlaneGeometry(floorSize, floorSize);
+const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2; // Rotate the plane to be horizontal
+// scene.add(floor);
 
-const BoxGeo = new THREE.BoxGeometry(1, 1);
-const Boxmaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
-const cube = new THREE.Mesh(BoxGeo, Boxmaterial);
-cube.position.y = -0.5; // Set the cube's y position to half its height to rest it on the plane
+//walls of maze
+const wallGeometry = new THREE.BoxGeometry(cellSize, 2, cellSize);
+const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+const walls = [];
+
+for (let i = 0; i < maze.length; i++) {
+    for (let j = 0; j < maze[i].length; j++) {
+        if (maze[i][j] === 1) {
+            const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+            wall.position.set(j * cellSize - floorSize / 2 + cellSize / 2, 0, -i * cellSize + floorSize / 2 - cellSize / 2); // Position the wall based on the array index
+            scene.add(wall);
+            walls.push(wall);
+        }
+    }
+}
+
+
+
+//shape
+const shapeGeo = new THREE.SphereGeometry(1,64,32);
+const Boxmaterial = new THREE.MeshBasicMaterial({ color: 0xfffff0, side: THREE.DoubleSide });
+const cube = new THREE.Mesh(shapeGeo, Boxmaterial);
+cube.position.y = 0; // Set the cube's y position to half its height to rest it on the plane
 scene.add(cube);
 
 
 // Rotate and position the plane to act as a floor
-plane.rotation.x = -Math.PI / 2; // Rotate the plane 90 degrees
-plane.position.y = -1; // Position the plane down along the y-axis
+floor.rotation.x = -Math.PI / 2; // Rotate the floor 90 degrees
+floor.position.y = -1; // Position the floor down along the y-axis
 
-// Add the plane mesh to our scene
-scene.add(plane);
+// Add the floor mesh to our scene
+scene.add(floor);
 
 // Initialize OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -83,25 +118,38 @@ document.addEventListener('keyup', (event) => {
     }
 });
 
+function checkCollision(newPosition) {
+    const cubeBox = new THREE.Box3().setFromObject(cube);
+    cubeBox.translate(newPosition.clone().sub(cube.position));
+    for (const wall of walls) {
+        const wallBox = new THREE.Box3().setFromObject(wall);
+        if (cubeBox.intersectsBox(wallBox)) {
+            return true; // Collision detected
+        }
+    }
+    return false; // No collision
+}
+
 function moveCube() {
     const speed = 0.1;
+    let newPosition = cube.position.clone();
+
     if (moveDirection.up) {
-        cube.position.z -= speed
-        // cube.rotation.x -= 0.2
-        // moveDirection.up = false
-    };
+        newPosition.z -= speed;
+    }
     if (moveDirection.down) {
-        cube.position.z += speed
-        // moveDirection.down = false
-    };
+        newPosition.z += speed;
+    }
     if (moveDirection.left) {
-        cube.position.x -= speed
-        // moveDirection.left = false
-    };
+        newPosition.x -= speed;
+    }
     if (moveDirection.right) {
-        cube.position.x += speed
-        // moveDirection.right = false
-    };
+        newPosition.x += speed;
+    }
+
+    if (!checkCollision(newPosition)) {
+        cube.position.copy(newPosition);
+    }
 }
 
 // Create an animation loop

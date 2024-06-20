@@ -99,8 +99,14 @@ window.addEventListener('mousemove', (event) => {
 
         // Calculate the tilt angles based on the intersection point
         const maxTiltAngle = Math.PI / 6; // Maximum tilt angle (30 degrees)
-        targetTiltX = THREE.MathUtils.clamp((point.z / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle);
-        targetTiltZ = THREE.MathUtils.clamp((point.x / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle);
+        
+        // Adjust tilt angles based on mouse movement direction
+        // Invert the tilt direction for targetTiltX and targetTiltZ
+        targetTiltZ = THREE.MathUtils.clamp((-point.x / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle); // Invert point.x
+        targetTiltX = THREE.MathUtils.clamp((point.z / floorSize) * maxTiltAngle, -maxTiltAngle, maxTiltAngle); // No change for point.z
+
+        // Start moving the ball when tilting begins
+        ballMoving = true;
     }
 });
 
@@ -187,27 +193,50 @@ function moveCube() {
         cube.position.copy(newPosition);
     }
 }
+
+let ballMoving = false;
+const ballSpeed = 0.2; // Adjust as needed
+
 function moveBall() {
-    const speed = 0.1; // Adjust speed as needed
-    const maxTiltAngle = Math.PI / 6; // Maximum tilt angle (30 degrees)
+    if (!ballMoving) {
+        return; // Ball is static, do nothing
+    }
 
-    // Calculate the movement direction based on tilt angles
+    // Calculate movement direction based on tilt angles
     const tiltX = tiltGroup.rotation.x;
-    const tiltZ = tiltGroup.rotation.z;
+    const tiltZ = -tiltGroup.rotation.z;
 
-    // Calculate movement direction from tilt angles
-    const moveDirection = new THREE.Vector3(
-        Math.sin(tiltZ) * Math.cos(tiltX),
-        -Math.sin(tiltX),
-        Math.cos(tiltZ) * Math.cos(tiltX)
-    );
+    // Calculate movement vector based on current tilt
+    const movementVector = new THREE.Vector3(Math.sin(tiltZ), 0, Math.sin(tiltX)).normalize();
+    movementVector.multiplyScalar(ballSpeed);
 
-    // Scale the movement direction by speed
-    moveDirection.multiplyScalar(speed);
+    // Calculate new position
+    const newPosition = cube.position.clone().add(movementVector);
 
-    // Update ball position
-    cube.position.add(moveDirection);
+    // Check for collision with walls
+    if (!checkCollision(newPosition)) {
+        cube.position.copy(newPosition);
+    } else {
+        // Handle sliding along the wall
+        const slideVector = movementVector.clone().normalize(); // Direction of movement
+        const maxSlideAttempts = 10; // Maximum attempts to slide along the wall
+
+        // Attempt to slide along the wall
+        for (let i = 0; i < maxSlideAttempts; i++) {
+            const offsetPosition = cube.position.clone().add(slideVector.multiplyScalar(ballSpeed));
+            if (!checkCollision(offsetPosition)) {
+                cube.position.copy(offsetPosition);
+                break; // Successfully slid along the wall
+            }
+        }
+    }
+
+    // Update ballMoving state based on movement
+    if (Math.abs(tiltX) < 0.01 && Math.abs(tiltZ) < 0.01) {
+        ballMoving = false; // Stop moving if tilt angles are close to zero
+    }
 }
+
 
 // Create an animation loop
 function animate() {
@@ -215,7 +244,7 @@ function animate() {
 
     moveCube(); // Move the cube based on key inputs
     moveBall();
-
+    // checkCollision();
     // Smoothly interpolate the tilt angles
     tiltGroup.rotation.x += (targetTiltX - tiltGroup.rotation.x) * tiltSpeed;
     tiltGroup.rotation.z += (targetTiltZ - tiltGroup.rotation.z) * tiltSpeed;

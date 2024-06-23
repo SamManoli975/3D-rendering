@@ -25,6 +25,7 @@ const maze = [
     [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
     [1, 1, 1, 1, 0, 1, 1, 1, 1, 1]
 ];
+
 // Create a renderer and add it to the DOM
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);

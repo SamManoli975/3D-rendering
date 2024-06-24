@@ -33,7 +33,7 @@ controls.maxPolarAngle = Math.PI / 2; // Limit vertical movement to the ground
 
 
 
-const controls = new DragControls([cube], camera, renderer.domElement);
+// const controls = new DragControls([cube], camera, renderer.domElement);
 // const controls2 = new DragControls([edgesLineSegments], camera, renderer.domElement);
 
 controls.addEventListener('dragstart', function (event) {

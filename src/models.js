@@ -18,23 +18,32 @@ scene.add(topLight);
 const ambientLight = new THREE.AmbientLight(0x333333, 1);
 scene.add(ambientLight);
 
-
-
 // Instantiate a loader for the .gltf file
 const loader = new GLTFLoader();
+
+let train; // Declare train variable
 
 // Load the GLTF file
 loader.load(
   'train/scene.gltf', // Adjust the path to your model
-  function train(gltf) {
+  function (gltf) {
     // If the file is loaded, add it to the scene
     const object = gltf.scene;
     scene.add(object);
-    
+    train = object; // Assign object to train variable
 
-    // Adjust scale of the object
-    object.scale.set(5, 5, 5); // Example: scale up by a factor of 5
-    return object
+    // Adjust scale and position of the object
+    object.scale.set(9, 9, 9);
+    object.position.set(49, -69, 0);
+
+    // Position camera to focus on the train
+    camera.position.set(object.position.x - 100, object.position.y + 200, object.position.z + 200);
+
+    // Set controls target to the train's position
+    controls.target.copy(object.position);
+
+    // Update controls for smooth interaction
+    controls.update();
   },
   function (xhr) {
     // While it is loading, log the progress
@@ -45,16 +54,26 @@ loader.load(
     console.error('Error loading GLTF model:', error);
   }
 );
-const increment = 52;
-const numberOfTracks = 1; // Set the desired number of tracks
-const models = [];
+
+const increment = 149;
+const numberOfTracks = 2; // Set the desired number of tracks
+const straightModels = [];
 for (let i = 0; i < numberOfTracks; i++) {
-  models.push({
-    path: 'PackTracks/scene.gltf',
+  straightModels.push({
+    path: 'PackTracks/straight2.gltf',
     scale: [1, 1, 1],
-    position: [0, 1.2, i * increment]
+    position: [-35, 1.2, i * increment]
   });
 }
+
+// Curved tracks
+const curvedModels = [];
+curvedModels.push({
+  path: 'PackTracks/Curved2.gltf',
+  scale: [1, 1, 1],
+  position: [167, 0, -237],
+  rotation: [0, 5.78, 0]  // Rotate 90 degrees around Y-axis
+});
 
 // Function to load a single model
 function loadModel(modelConfig) {
@@ -64,6 +83,10 @@ function loadModel(modelConfig) {
       const object = gltf.scene;
       object.scale.set(...modelConfig.scale);
       object.position.set(...modelConfig.position);
+      if (modelConfig.rotation) {
+        object.rotation.set(...modelConfig.rotation);
+      }
+
       scene.add(object);
     },
     function (xhr) {
@@ -76,7 +99,8 @@ function loadModel(modelConfig) {
 }
 
 // Load all models
-models.forEach(modelConfig => loadModel(modelConfig));
+straightModels.forEach(modelConfig => loadModel(modelConfig));
+curvedModels.forEach(modelConfig => loadModel(modelConfig));
 
 // Initialize OrbitControls for camera movement
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -84,12 +108,30 @@ controls.enableDamping = true; // Optional: smooth camera movement
 controls.dampingFactor = 0.25; // Optional: speed of damping effect
 controls.autoRotate = false; // Optional: disable auto-rotation
 
+
 // Render the scene
 function animate() {
   requestAnimationFrame(animate);
+  
+  
+
+
+  // Apply rotation to the train (example: rotate around Y-axis)
+  if (train) {
+    // Example: Move the train forward in the scene
+    train.position.z -= 1; // Adjust as needed for your animation
+
+    // Update camera position to follow the train
+    camera.position.set(train.position.x - 100, train.position.y + 200, train.position.z + 200);
+
+    // Set controls target to the train's position
+    controls.target.copy(train.position);
+  }
+
+  
+
   controls.update(); // Update controls for smooth interaction
   renderer.render(scene, camera);
-
 }
 
 // Add a listener to the window, so we can resize the window and the camera

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { rotate } from 'three/examples/jsm/nodes/Nodes.js';
 
 // Initialize the scene, camera, and renderer
 const scene = new THREE.Scene();
@@ -73,7 +72,7 @@ straightModels.push({
     scale: [1, 1, 1],
     position: [158, 1.2, -468],
     rotation: [0,5.2,0]
-})
+});
 
 // Curved tracks
 const curvedModels = [];
@@ -82,14 +81,7 @@ curvedModels.push({
   scale: [1, 1, 1],
   position: [167, 0, -237],
   rotation: [0, 5.78, 0]  // Rotate 90 degrees around Y-axis
-},
-// {
-//   path: 'PackTracks/Curved2.gltf',
-//   scale: [1, 1, 1],
-//   position: [180, 0, -220],
-//   rotation: [0, 5.78, 0]  // Rotate 90 degrees around Y-axis
-// }
-);
+});
 
 // Function to load a single model
 function loadModel(modelConfig) {
@@ -119,7 +111,7 @@ straightModels.forEach(modelConfig => loadModel(modelConfig));
 curvedModels.forEach(modelConfig => loadModel(modelConfig));
 
 // Define the path
-const radius =225; // Adjust this radius to change the width of the arc
+const radius = 225; // Adjust this radius to change the width of the arc
 const straightPathEndZ = -100; // Adjust this to change the length of the straight path
 const centerX = 275; // Center of the circle in x-axis, adjust as needed
 const centerY = -64; // Keeping the y coordinate constant
@@ -141,6 +133,8 @@ for (let i = 0; i <= numPoints; i++) {
   const z = centerZ + radius * Math.sin(angle);
   waypoints.push(new THREE.Vector3(x, centerY, z));
 }
+
+// Add waypoints for the straight path after the turn
 const straightPathAfterTurnLength = 200; // Adjust this to change the length of the straight path after the turn
 const lastArcPoint = waypoints[waypoints.length - 1];
 const diagonalLength = Math.sqrt(straightPathAfterTurnLength ** 2 / 2); // Length of the diagonal path (hypotenuse)
@@ -165,9 +159,9 @@ let t = 0; // Parameter for the curve
 const speed = 0.002; // Adjust the speed as needed
 
 // Camera follow variables
-const cameraOffset = new THREE.Vector3(0, 50, -150); // Offset from the train's position
-const cameraLookAtOffset = new THREE.Vector3(0, 10, 0); // Offset for where the camera should look at relative to train
-
+const cameraDistance = 200; // Distance from the train
+const cameraHeight = 100; // Height of the camera above the train
+const cameraLookAtOffset = new THREE.Vector3(0, 10, -50); // Offset for where the camera should look at relative to train
 
 // Animation loop
 function animate() {
@@ -185,9 +179,13 @@ function animate() {
   
       train.position.copy(position);
       train.lookAt(position.clone().add(tangent));
-      // Update camera position and target to follow the train
+
+      // Calculate camera position based on train's position and movement
       const cameraTarget = train.position.clone().add(cameraLookAtOffset);
-      camera.position.copy(position.clone().add(cameraOffset));
+      const cameraPosition = train.position.clone().add(tangent.clone().multiplyScalar(-cameraDistance)).add(new THREE.Vector3(0, cameraHeight, 0)); // Adjust for camera height
+
+      // Update camera position and target to follow the train from behind
+      camera.position.copy(cameraPosition);
       camera.lookAt(cameraTarget);
     }
 
@@ -199,27 +197,6 @@ window.addEventListener("resize", function () {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-window.addEventListener('click', function (event) {
-  // Calculate mouse position in normalized device coordinates (-1 to +1) for both components
-  const mouse = new THREE.Vector2();
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-  // Use raycaster to find intersecting point with the ground plane
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, camera);
-
-  // Define the ground plane
-  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -64);
-
-  // Calculate the intersection point of the ray with the plane
-  const intersectPoint = new THREE.Vector3();
-  raycaster.ray.intersectPlane(plane, intersectPoint);
-
-  // Log the x and z coordinates
-  console.log(`X: ${intersectPoint.x}, Z: ${intersectPoint.z}`);
 });
 
 // Start the 3D rendering

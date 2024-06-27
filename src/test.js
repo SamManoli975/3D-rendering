@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { rotate } from 'three/examples/jsm/nodes/Nodes.js';
 
 // Initialize the scene, camera, and renderer
 const scene = new THREE.Scene();
@@ -67,6 +68,12 @@ for (let i = 0; i < numberOfTracks; i++) {
     position: [-35, 1.2, i * increment]
   });
 }
+straightModels.push({
+  path: 'PackTracks/straight2.gltf',
+    scale: [1, 1, 1],
+    position: [158, 1.2, -468],
+    rotation: [0,5.2,0]
+})
 
 // Curved tracks
 const curvedModels = [];
@@ -116,7 +123,7 @@ const radius =225; // Adjust this radius to change the width of the arc
 const straightPathEndZ = -100; // Adjust this to change the length of the straight path
 const centerX = 275; // Center of the circle in x-axis, adjust as needed
 const centerY = -64; // Keeping the y coordinate constant
-const centerZ = -170; // Center of the circle in z-axis, adjust as needed
+const centerZ = -180; // Center of the circle in z-axis, adjust as needed
 const startAngle = Math.PI; // Start angle in radians (180 degrees)
 const endAngle = Math.PI * 1.3; // End angle in radians (270 degrees)
 const numPoints = 24; // Number of points along the arc
@@ -134,6 +141,15 @@ for (let i = 0; i <= numPoints; i++) {
   const z = centerZ + radius * Math.sin(angle);
   waypoints.push(new THREE.Vector3(x, centerY, z));
 }
+const straightPathAfterTurnLength = 200; // Adjust this to change the length of the straight path after the turn
+const lastArcPoint = waypoints[waypoints.length - 1];
+const diagonalLength = Math.sqrt(straightPathAfterTurnLength ** 2 / 2); // Length of the diagonal path (hypotenuse)
+
+for (let i = 1; i <= 10; i++) { // Number of points for the straight path after the turn
+  const x = lastArcPoint.x + i * (straightPathAfterTurnLength / 7.7);
+  const z = lastArcPoint.z - i * (straightPathAfterTurnLength / 10) * (diagonalLength / straightPathAfterTurnLength);
+  waypoints.push(new THREE.Vector3(x, lastArcPoint.y, z));
+}
 
 // Create a smooth curve using CatmullRomCurve3
 const curve = new THREE.CatmullRomCurve3(waypoints);
@@ -147,6 +163,11 @@ scene.add(tubeMesh);
 
 let t = 0; // Parameter for the curve
 const speed = 0.002; // Adjust the speed as needed
+
+// Camera follow variables
+const cameraOffset = new THREE.Vector3(0, 50, -150); // Offset from the train's position
+const cameraLookAtOffset = new THREE.Vector3(0, 10, 0); // Offset for where the camera should look at relative to train
+
 
 // Animation loop
 function animate() {
@@ -164,6 +185,10 @@ function animate() {
   
       train.position.copy(position);
       train.lookAt(position.clone().add(tangent));
+      // Update camera position and target to follow the train
+      const cameraTarget = train.position.clone().add(cameraLookAtOffset);
+      camera.position.copy(position.clone().add(cameraOffset));
+      camera.lookAt(cameraTarget);
     }
 
     renderer.render(scene, camera);

@@ -33,8 +33,8 @@ loader.load(
     train = object; // Assign object to train variable
 
     // Adjust scale and position of the object
-    object.scale.set(9, 9, 9);
-    object.position.set(49, -69, 0);
+    object.scale.set(10, 10, 10);
+    object.position.set(47, -64, 0);
 
     // Position camera to focus on the train
     camera.position.set(object.position.x - 100, object.position.y + 200, object.position.z + 200);
@@ -117,16 +117,16 @@ function animate() {
 
 
   // Apply rotation to the train (example: rotate around Y-axis)
-  if (train) {
-    // Example: Move the train forward in the scene
-    train.position.z -= 1; // Adjust as needed for your animation
+  // if (train) {
+  //   // Example: Move the train forward in the scene
+  //   train.position.z -= 1; // Adjust as needed for your animation
 
-    // Update camera position to follow the train
-    camera.position.set(train.position.x - 100, train.position.y + 200, train.position.z + 200);
+  //   // Update camera position to follow the train
+  //   camera.position.set(train.position.x - 100, train.position.y + 200, train.position.z + 200);
 
-    // Set controls target to the train's position
-    controls.target.copy(train.position);
-  }
+  //   // Set controls target to the train's position
+  //   controls.target.copy(train.position);
+  // }
 
   
 
@@ -140,6 +140,10 @@ window.addEventListener("resize", function () {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
+
+
 
 // Start the 3D rendering
 animate();

@@ -1,0 +1,15 @@
+[
+    {
+      "path": "PackTracks/Curved2.gltf",
+      "scale": [1, 1, 1],
+      "position": [167, 0, -237],
+      "rotation": [0, 5.78, 0]
+    },
+    {
+      "path": "PackTracks/Curved2.gltf",
+      "scale": [1, 1, 1],
+      "position": [200, 0, -300],
+      "rotation": [0, 3.14, 0]  
+    }
+  ]
+  

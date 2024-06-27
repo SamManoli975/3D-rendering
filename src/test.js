@@ -23,6 +23,7 @@ scene.add(ambientLight);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
+controls.enableZoom = true;  // Ensure zoom is enabled
 controls.autoRotate = false;
 
 // Instantiate a loader for the .gltf file
@@ -40,7 +41,7 @@ loader.load(
 
         // Adjust scale and position of the object
         object.scale.set(10, 10, 10);
-        object.position.set(47, -64, 0);
+        object.position.set(47, -64, 300);
 
         // Set controls target to the train's position
         controls.target.copy(object.position);
@@ -58,7 +59,7 @@ loader.load(
 
 // Load track models
 const increment = 149;
-const numberOfTracks = 2; // Set the desired number of tracks
+const numberOfTracks = 5; // Set the desired number of tracks
 const straightModels = [];
 for (let i = 0; i < numberOfTracks; i++) {
     straightModels.push({
@@ -72,6 +73,12 @@ straightModels.push({
     scale: [1, 1, 1],
     position: [157, 1.2, -466],
     rotation: [0, 5.2, 0]
+},
+{
+  path: 'PackTracks/straight2.gltf',
+  scale: [1, 1, 1],
+  position: [286, 1.2, -535],
+  rotation: [0, 5.2, 0]
 });
 
 // Curved tracks
@@ -112,13 +119,13 @@ curvedModels.forEach(modelConfig => loadModel(modelConfig));
 
 // Define the path
 // Define the path
-const radius = 225; // Adjust this radius to change the width of the arc
-const straightPathEndZ = -100; // Adjust this to change the length of the straight path
-const centerX = 275; // Center of the circle in x-axis, adjust as needed
-const centerY = -64; // Keeping the y coordinate constant
-const centerZ = -180; // Center of the circle in z-axis, adjust as needed
-const startAngle = Math.PI; // Start angle in radians (180 degrees)
-const endAngle = Math.PI * 1.3; // End angle in radians (270 degrees)
+const radius = 225; 
+const straightPathEndZ = -129; 
+const centerX = 272; 
+const centerY = -64; 
+const centerZ = -180; 
+const startAngle = Math.PI; 
+const endAngle = Math.PI * 1.34; 
 const numPoints = 24; // Number of points along the arc
 
 // Define waypoints for the straight path
@@ -136,12 +143,12 @@ for (let i = 0; i <= numPoints; i++) {
 }
 
 // Add waypoints for the straight path after the turn
-const straightPathAfterTurnLength = 200; // Adjust this to change the length of the straight path after the turn
+const straightPathAfterTurnLength = 200; 
 const lastArcPoint = waypoints[waypoints.length - 1];
 const diagonalLength = Math.sqrt(straightPathAfterTurnLength ** 2 / 2); // Length of the diagonal path (hypotenuse)
 
 for (let i = 1; i <= 10; i++) { // Number of points for the straight path after the turn
-    const x = lastArcPoint.x + i * (straightPathAfterTurnLength / 7.7);
+    const x = lastArcPoint.x + i * (straightPathAfterTurnLength / 7.6);
     const z = lastArcPoint.z - i * (straightPathAfterTurnLength / 10) * (diagonalLength / straightPathAfterTurnLength);
     waypoints.push(new THREE.Vector3(x, lastArcPoint.y, z));
 }
@@ -157,7 +164,7 @@ const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
 scene.add(tubeMesh);
 
 let t = 0; // Parameter for the curve
-const speed = 0.002; // Adjust the speed as needed
+const speed = 0.002; 
 
 
 // Camera follow variables

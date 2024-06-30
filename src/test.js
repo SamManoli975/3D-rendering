@@ -41,7 +41,7 @@ loader.load(
 
         // Adjust scale and position of the object
         object.scale.set(10, 10, 10);
-        object.position.set(47, -64, 300);
+        object.position.set(47, -64, 0);
 
         // Set controls target to the train's position
         controls.target.copy(object.position);
@@ -71,13 +71,13 @@ for (let i = 0; i < numberOfTracks; i++) {
 straightModels.push({
     path: 'PackTracks/straight2.gltf',
     scale: [1, 1, 1],
-    position: [157, 1.2, -466],
+    position: [157, 1.2, -464],
     rotation: [0, 5.2, 0]
 },
 {
   path: 'PackTracks/straight2.gltf',
   scale: [1, 1, 1],
-  position: [286, 1.2, -535],
+  position: [286, 1.2, -533],
   rotation: [0, 5.2, 0]
 });
 
@@ -86,8 +86,14 @@ const curvedModels = [];
 curvedModels.push({
     path: 'PackTracks/Curved2.gltf',
     scale: [1, 1, 1],
-    position: [167, 0, -237],
+    position: [167, 0, -235],
     rotation: [0, 5.78, 0]  // Rotate 90 degrees around Y-axis
+},
+{
+  path: 'PackTracks/Curved2.gltf',
+  scale: [1, 1, 1],
+  position: [-77, 0, -237],
+  rotation: [0, 10, 0]  // Rotate 90 degrees around Y-axis
 });
 
 // Function to load a single model
@@ -117,55 +123,61 @@ function loadModel(modelConfig) {
 straightModels.forEach(modelConfig => loadModel(modelConfig));
 curvedModels.forEach(modelConfig => loadModel(modelConfig));
 
-// Define the path
-// Define the path
-const radius = 225; 
-const straightPathEndZ = -129; 
-const centerX = 272; 
-const centerY = -64; 
-const centerZ = -180; 
-const startAngle = Math.PI; 
-const endAngle = Math.PI * 1.34; 
-const numPoints = 24; // Number of points along the arc
-
-// Define waypoints for the straight path
-const waypoints = [
-    new THREE.Vector3(47, -64, 0),  // Starting point
-    new THREE.Vector3(47, -64, straightPathEndZ) // End of straight path
+// Define the straight path before the decision point
+const waypointsStraight = [
+    new THREE.Vector3(47, -64, 0),
+    new THREE.Vector3(47, -64, -100)
 ];
 
-// Generate waypoints along the circular arc
+// Define the first curve (left turn)
+const radius = 300; 
+const centerX1 = 347; 
+const centerY = -64; 
+const centerZ1 = -135; 
+const startAngle1 = Math.PI; 
+const endAngle1 = Math.PI * 1.31; 
+const numPoints = 23; // Number of points along the arc
+
+const waypointsLeft = [
+    new THREE.Vector3(47, -64, -100) // Starting point at decision point
+];
+
+// Generate waypoints along the first circular arc (left turn)
 for (let i = 0; i <= numPoints; i++) {
-    const angle = startAngle + (i * (endAngle - startAngle) / numPoints);
-    const x = centerX + radius * Math.cos(angle);
-    const z = centerZ + radius * Math.sin(angle);
-    waypoints.push(new THREE.Vector3(x, centerY, z));
+    const angle = startAngle1 + (i * (endAngle1 - startAngle1) / numPoints);
+    const x = centerX1 + radius * Math.cos(angle);
+    const z = centerZ1 + radius * Math.sin(angle);
+    waypointsLeft.push(new THREE.Vector3(x, centerY, z));
 }
 
-// Add waypoints for the straight path after the turn
-const straightPathAfterTurnLength = 200; 
-const lastArcPoint = waypoints[waypoints.length - 1];
-const diagonalLength = Math.sqrt(straightPathAfterTurnLength ** 2 / 2); // Length of the diagonal path (hypotenuse)
+// Define the second curve (right turn)
+const centerX2 = -247; 
+const centerZ2 = -135; 
+const startAngle2 = 0; 
+const endAngle2 = Math.PI * 0.31; 
 
-for (let i = 1; i <= 10; i++) { // Number of points for the straight path after the turn
-    const x = lastArcPoint.x + i * (straightPathAfterTurnLength / 7.6);
-    const z = lastArcPoint.z - i * (straightPathAfterTurnLength / 10) * (diagonalLength / straightPathAfterTurnLength);
-    waypoints.push(new THREE.Vector3(x, lastArcPoint.y, z));
+const waypointsRight = [
+    new THREE.Vector3(47, -64, -100) // Starting point at decision point
+];
+
+// Generate waypoints along the second circular arc (right turn)
+for (let i = 0; i <= numPoints; i++) {
+    const angle = startAngle2 + (i * (endAngle2 - startAngle2) / numPoints);
+    const x = centerX2 + radius * Math.cos(angle);
+    const z = centerZ2 + radius * Math.sin(angle);
+    waypointsRight.push(new THREE.Vector3(x, centerY, z));
 }
 
-// Create a smooth curve using CatmullRomCurve3
-const curve = new THREE.CatmullRomCurve3(waypoints);
-curve.curveType = 'catmullrom';
-curve.tension = 0.5;
-
-const tubeGeometry = new THREE.TubeGeometry(curve, 100, 1, 8, false);
-const tubeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
-scene.add(tubeMesh);
+// Create smooth curves using CatmullRomCurve3
+const straightCurve = new THREE.CatmullRomCurve3(waypointsStraight);
+const curveLeft = new THREE.CatmullRomCurve3(waypointsLeft);
+const curveRight = new THREE.CatmullRomCurve3(waypointsRight);
 
 let t = 0; // Parameter for the curve
-const speed = 0.002; 
+const speed = 0.022; 
 
+let currentCurve = straightCurve; // Set the default curve
+let decisionMade = false; // Track if a decision has been made
 
 // Camera follow variables
 const cameraDistance = 200; // Distance from the train
@@ -182,40 +194,53 @@ controls.addEventListener('end', () => {
     isUserInteracting = false;
 });
 
+// Event listener for keyboard input to switch curves
+window.addEventListener('keydown', (event) => {
+    if (!decisionMade && train && train.position.distanceTo(new THREE.Vector3(47, -64, -100)) < 10) { // Check if near decision point
+        if (event.key === '1') {
+            currentCurve = curveLeft;
+            decisionMade = true; // Prevent further input
+        } else if (event.key === '2') {
+            currentCurve = curveRight;
+            decisionMade = true; // Prevent further input
+        }
+    }
+});
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
 
     controls.update(); // Update controls for smooth interaction
 
-    // Move the train along the waypoints
+    // Move the train along the waypoints of the selected curve
     if (train) {
         t += speed;
         if (t > 1) t = 0; // Loop back to start
 
-        const position = curve.getPointAt(t);
-        const tangent = curve.getTangentAt(t);
+        const position = currentCurve.getPointAt(t);
+        const tangent = currentCurve.getTangentAt(t);
 
         train.position.copy(position);
         train.lookAt(position.clone().add(tangent));
 
         if (!isUserInteracting) {
-          // Calculate camera position based on train's position and movement
-          const cameraTarget = train.position.clone().add(cameraLookAtOffset);
-          const cameraPosition = train.position.clone().add(tangent.clone().multiplyScalar(-cameraDistance)).add(new THREE.Vector3(0, cameraHeight, 0)); // Adjust for camera height
-      
-          // Update camera position to follow the train from behind
-          camera.position.copy(cameraPosition);
-          // Ensure the camera looks at the train with the specified offset
-          camera.lookAt(cameraTarget);
-      
-          // Ensure the controls target is also updated to match the camera's target
-          controls.target.copy(cameraTarget);
-      } else {
-          // If the user is interacting, still update the controls target to follow the train
-          const cameraTarget = train.position.clone().add(cameraLookAtOffset);
-          controls.target.copy(cameraTarget);
-      }
+            // Calculate camera position based on train's position and movement
+            const cameraTarget = train.position.clone().add(cameraLookAtOffset);
+            const cameraPosition = train.position.clone().add(tangent.clone().multiplyScalar(-cameraDistance)).add(new THREE.Vector3(0, cameraHeight, 0)); // Adjust for camera height
+        
+            // Update camera position to follow the train from behind
+            camera.position.copy(cameraPosition);
+            // Ensure the camera looks at the train with the specified offset
+            camera.lookAt(cameraTarget);
+        
+            // Ensure the controls target is also updated to match the camera's target
+            controls.target.copy(cameraTarget);
+        } else {
+            // If the user is interacting, still update the controls target to follow the train
+            const cameraTarget = train.position.clone().add(cameraLookAtOffset);
+            controls.target.copy(cameraTarget);
+        }
     }
 
     renderer.render(scene, camera);
